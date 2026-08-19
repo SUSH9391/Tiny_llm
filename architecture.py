@@ -1,0 +1,114 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+from Embeddings import Embeddings
+from Attention import Attention
+from feed_forward import FFN
+from normalization import Norm
+
+class Block(nn.Module):
+    """Pre-norm transformer block (vanilla nanoGPT wiring)."""
+
+    def __init__(self, cfg):
+        super().__init__()
+        self.ln1 = Norm(cfg.n_embd)
+        self.attn = Attention(cfg)
+        self.ln2 = Norm(cfg.n_embd)
+        self.ffn = FFN(cfg)
+
+    def forward(self, x):
+        x = x + self.attn(self.ln1(x))
+        return x + self.ffn(self.ln2(x))
+
+
+class GPT(nn.Module):
+    """Embeddings -> N blocks -> final norm -> untied lm_head."""
+
+    def __init__(self, cfg):
+        super().__init__()
+        self.cfg = cfg
+        self.embeddings = Embeddings(cfg)
+        self.blocks = nn.ModuleList(
+            [Block(cfg) for _ in range(cfg.n_layer)]
+        )
+        self.norm_f = Norm(cfg.n_embd)
+
+        self.lm_head = nn.Linear(
+            cfg.n_embd,
+            cfg.vocab_size,
+            bias=False,
+        )
+
+        self.apply(self._init_weights)
+
+        residual_std = 0.02 / math.sqrt(
+            2.0 * cfg.n_layer
+        )
+
+        for block in self.blocks:
+            nn.init.normal_(
+                block.attn.proj.weight,
+                mean=0.0,
+                std=residual_std,
+            )
+
+            nn.init.normal_(
+                block.ffn.down.weight,
+                mean=0.0,
+                std=residual_std,
+            )
+
+        self.lm_head.weight = self.embeddings.tok.weight
+
+    @staticmethod
+    def _init_weights(module):
+        if isinstance(module, nn.Linear):
+            nn.init.normal_(
+                module.weight,
+                mean=0.0,
+                std=0.02,
+            )
+
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+
+        elif isinstance(module, nn.Embedding):
+            nn.init.normal_(
+                module.weight,
+                mean=0.0,
+                std=0.02,
+            )
+
+    def forward(self, idx):
+        x = self.embeddings(idx)
+        for block in self.blocks:
+            x = block(x)
+        return self.lm_head(self.norm_f(x))
+
+    @torch.no_grad()
+    def generate(self, idx, max_new_tokens, temperature=1.0, top_k=None):
+        """
+        Autoregressive generation.
+        idx: LongTensor of shape (B, T) – the conditioning sequence.
+        Returns: LongTensor of shape (B, T+max_new_tokens)
+        """
+        self.eval()                      # make sure dropout is off
+        for _ in range(max_new_tokens):
+            # Crop to block_size if needed
+            idx_cond = idx if idx.size(1) <= self.cfg.block_size else idx[:, -self.cfg.block_size:]
+            logits = self(idx_cond)                     # (B, T, vocab)
+            logits = logits[:, -1, :] / temperature     # focus on last step
+            if top_k is not None:
+                v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+                logits[logits < v[:, [-1]]] = -float('Inf')
+            probs = F.softmax(logits, dim=-1)           # (B, vocab)
+            idx_next = torch.multinomial(probs, num_samples=1)  # (B, 1)
+            idx = torch.cat((idx, idx_next), dim=1)    # (B, T+1)
+        return idx
+
+
+
+def build_model(cfg):
+    """The topology is yours: rewire blocks, tie weights, go parallel."""
+    return GPT(cfg)

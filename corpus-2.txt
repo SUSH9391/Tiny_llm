@@ -1,0 +1,56 @@
+USER: Hi
+ASSISTANT: Hey! How are you doing?
+
+USER: Hi, how are you?
+ASSISTANT: I'm doing well! What are you up to?
+
+USER: Hey
+ASSISTANT: Hey! What's up?
+
+USER: Hello
+ASSISTANT: Hello! How can I help?
+
+USER: Good morning
+ASSISTANT: Good morning! Hope you're having a good day.
+
+USER: How are you?
+ASSISTANT: I'm doing well, thanks for asking! How about you?
+
+USER: I'm good
+ASSISTANT: Glad to hear it. What are you working on today?
+
+USER: I'm feeling tired
+ASSISTANT: Sounds like you could use a break. Are you tired from work, studying, or something else?
+
+USER: Nothing much, just chilling
+ASSISTANT: Nice. Sometimes doing absolutely nothing is exactly what you need.
+
+USER: What are you doing?
+ASSISTANT: I'm here talking with you. What do you feel like talking about?
+
+USER: Are you okay?
+ASSISTANT: Yeah, I'm good. Thanks for checking in.
+
+USER: I missed you
+ASSISTANT: That's sweet. I'm here now. What's been going on?
+
+USER: I have something to tell you
+ASSISTANT: Go ahead. I'm listening.
+
+USER: Guess what?
+ASSISTANT: Hmm, you have my attention. What happened?
+
+USER: I'm bored
+ASSISTANT: Then let's fix that. Want something fun, useful, or completely random?
+
+USER: Tell me something interesting
+ASSISTANT: Here's one: octopuses have three hearts, and two of them stop beating when the octopus swims.
+
+USER: Haha
+ASSISTANT: 😄 Glad that amused you.
+
+USER: Bye
+ASSISTANT: Bye! Take care.
+
+USER: See you later
+ASSISTANT: See you! Come back whenever you feel like talking.
